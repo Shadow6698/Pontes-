@@ -1,0 +1,75 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local mouse = player:GetMouse()
+local bridgeActive = false
+local bridgeParts = {}
+local runService = game:GetService("RunService")
+
+-- Criar GUI móvel
+local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+screenGui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0.2, 0, 0.15, 0)
+frame.Position = UDim2.new(0.05, 0, 0.8, 0)
+frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+frame.Active = true
+frame.Draggable = true
+
+local activateButton = Instance.new("TextButton", frame)
+activateButton.Size = UDim2.new(1, 0, 0.5, 0)
+activateButton.Position = UDim2.new(0, 0, 0, 0)
+activateButton.Text = "Ativar Ponte"
+activateButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+
+local deactivateButton = Instance.new("TextButton", frame)
+deactivateButton.Size = UDim2.new(1, 0, 0.5, 0)
+deactivateButton.Position = UDim2.new(0, 0, 0.5, 0)
+deactivateButton.Text = "Desativar Ponte"
+deactivateButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+
+-- Criar ponte contínua
+local function createBridge(startPosition, direction)
+    local currentPosition = startPosition
+    while bridgeActive do
+        local part = Instance.new("Part", workspace)
+        part.Size = Vector3.new(5, 1, 5) -- Tamanho do bloco da ponte
+        part.Position = currentPosition
+        part.Anchored = true
+        part.Material = Enum.Material.Concrete
+        part.Color = Color3.fromRGB(150, 150, 150)
+
+        table.insert(bridgeParts, part)
+        currentPosition = currentPosition + (direction * 5) -- Avança a ponte
+
+        task.wait(0.1) -- Pequeno delay para criar os blocos
+    end
+end
+
+-- Ativar ponte ao clicar no botão
+activateButton.MouseButton1Click:Connect(function()
+    bridgeActive = true
+end)
+
+-- Desativar ponte e remover blocos
+deactivateButton.MouseButton1Click:Connect(function()
+    bridgeActive = false
+    for _, part in pairs(bridgeParts) do
+        if part then
+            part:Destroy()
+        end
+    end
+    bridgeParts = {}
+end)
+
+-- Criar ponte na direção clicada
+mouse.Button1Down:Connect(function()
+    if bridgeActive then
+        local clickPosition = mouse.Hit.p
+        local startPosition = humanoidRootPart.Position - Vector3.new(0, 3, 0) -- Inicia abaixo do jogador
+        local direction = (clickPosition - startPosition).Unit -- Direção do clique
+
+        createBridge(startPosition, direction)
+    end
+end)
